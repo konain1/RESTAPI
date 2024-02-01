@@ -67,17 +67,25 @@ app.get('/api/users', (req, res) => {
 });
 
 app.post('/api/users', (req, res) => {
-    let newUser = {
-        id: users.length + 1,
-        first_name: 'konain',
-        email: 'konain@gmail.com',
-        gender: 'male',
-        company: 'innovasor'
-    };
+    // let newUser = {
+    //     id: users.length + 1,
+    //     first_name: 'konain',
+    //     email: 'konain@gmail.com',
+    //     gender: 'male',
+    //     company: 'innovasor'
+    // };
 
-    users.push(newUser);
+    const Body = req.body
+    // users.push(newUser);
+    users.push({
+        first_name:Body.first_name,
+        email:Body.email,
+        gender:Body.gender,
+        company:Body.company,
+        id:users.length+1
+    })
 
-    return res.json(newUser);
+    return res.json({msg:'new user added'});
 });
 
 app.listen(4005, () => {
