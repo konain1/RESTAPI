@@ -1,58 +1,51 @@
 const express = require('express');
 const app = express();
+const mongoose = require('mongoose')
+
+let url = 'mongodb+srv://konain7:Kaunain%4099@cluster0.rmyvhx6.mongodb.net/myDB'
 
 let users = require('./mock_users.json');
-const router = express.Router();
-
-// router.route('/api/users/:id').get((req, res) => {
-//     let id = Number(req.params.id);
-
-//     try {
-//         if (id < 1 || users.length < id) {
-//             return res.status(401).json({ msg: 'invalid id' });
-//         }
-
-//         let user = users.filter(user => user.id === id);
-//         return res.json(user);
-//     } catch (error) {
-//         console.log('error is = ', error);
-//         return res.status(500).json({ msg: 'Internal Server Error' });
-//     }
-// }).delete((req, res) => {
-//     let id = Number(req.params.id);
-
-//     let NewList = users.filter((user) => user.id !== id);
-//     users = NewList;
-
-//     console.log(NewList);
-//     return res.json(NewList);
-// }).put((req, res) => {
-//     let id = Number(req.params.id);
-
-//     let myemail = 'newEmail@gmail.com';
-
-//     // Find the index of the user with the given id
-//     let index = users.findIndex(user => user.id === id);
-
-//     if (index !== -1) {
-//         // Update the email of the user at the found index
-//         users[index].email = myemail;
-//         return res.json(users[index]);
-//     }
-
-//     return res.status(404).json({ msg: `No user found with id = ${id}` });
-// });
-app.get('/api/users/:id',(req,res)=>{
+const fs = require('fs');
 
 
-    let id = Number(req.params.id);
+// connecting with database
+mongoose.connect(url).then(()=>console.log('created db'))
+.catch((e)=>console.log(e))
+
+
+// creating a schema for storing for database
+const mySchema =  new mongoose.Schema({
+    first_name:{
+        type:String,
+        require:true
+    },
+    email:{
+        type:String,
+        require:true,
+        unique:true
+    }
+})
+
+
+// passing the structure 
+const UserModel = mongoose.model("publicusers",mySchema)
+
+app.use((req,res,next)=>{
+    console.log('middleware 1')
+    fs.appendFile('log.txt',`\n ${Date.now()} : ${req.method} : ${req.ip} ` , (err,data)=>{
+        next();
+    })
+})
+
+
+app.get('/api/users/:id', async(req,res)=>{
+
+
+    let id = req.params.id
 
         try {
-            if (id < 1 || users.length < id) {
-                return res.status(401).json({ msg: 'invalid id' });
-            }
-    
-            let user = users.filter(user => user.id === id);
+            let user = await UserModel.findOne({ _id: id }).exec()
+           console.log(user )
             return res.json(user);
         } catch (error) {
             console.log('error is = ', error);
@@ -60,32 +53,41 @@ app.get('/api/users/:id',(req,res)=>{
         }
 })
 app.use(express.json()); // Add this line to parse JSON in the request body
-app.use('/api/users', router);
 
-app.get('/api/users', (req, res) => {
-    res.json(users);
+app.get('/api/users',async (req, res) => {
+    const allusers = await UserModel.find()
+    console.log(allusers)
+    res.json(allusers);
 });
+app.delete('/api/users/:id',async(req,res)=>{
 
-app.post('/api/users', (req, res) => {
-    // let newUser = {
-    //     id: users.length + 1,
-    //     first_name: 'konain',
-    //     email: 'konain@gmail.com',
-    //     gender: 'male',
-    //     company: 'innovasor'
-    // };
+    const id  = req.params.id
+
+    try {
+        let deleteuser = await UserModel.findByIdAndDelete({_id : id})
+        res.json(deleteuser)
+        
+    } catch (error) {
+        res.status(403).json({msg:'invalid input or id'})
+    }
+})
+app.post('/api/users', async(req, res) => {
+    
 
     const Body = req.body
-    // users.push(newUser);
-    users.push({
-        first_name:Body.first_name,
-        email:Body.email,
-        gender:Body.gender,
-        company:Body.company,
-        id:users.length+1
-    })
 
-    return res.json({msg:'new user added'});
+    if(!Body.first_name || !Body.email){
+        return res.status(403).json({msg:'all fields must be filled'})
+    }
+
+    // storing the data into structure and passing the data onto database
+   const result = await UserModel.create({
+        first_name:Body.first_name,
+         email:Body.email,
+    })
+    console.log(result)
+    await result.save()
+    return res.status(201).json({msg:'new user added'});
 });
 
 app.listen(4005, () => {
