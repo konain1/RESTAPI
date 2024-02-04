@@ -52,4 +52,4 @@ app.post('/',(req,res)=>{
     res.json({msg:"connected to db"})
 })
 
-app.listen(4010)
+// app.listen(4010)
