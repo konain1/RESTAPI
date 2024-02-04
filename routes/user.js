@@ -2,33 +2,22 @@ const express = require('express');
 
 const Router = express.Router();
 
-Router.use(express.json());
+
+
+const {HandlerAllUsers , HandlerAllUsersDetailsById} = require('../controller/user')
+
+
+
+
+
 const UserModel = require('../model/user')
 
+Router.use(express.json());
+
+Router.get('/:id', HandlerAllUsersDetailsById)
 
 
-Router.get('/:id', async(req,res)=>{
-
-
-    let id = req.params.id
-
-        try {
-            let user = await UserModel.findOne({ _id: id }).exec()
-           console.log(user )
-            return res.json(user);
-        } catch (error) {
-            console.log('error is = ', error);
-            return res.status(500).json({ msg: 'Internal Server Error' });
-        }
-})
-
-
-Router.get('/',async (req, res) => {
-    const allusers = await UserModel.find()
-    console.log(allusers)
-    res.json(allusers);
-});
-
+Router.get('/',HandlerAllUsers)
 
 
 Router.delete('/:id',async(req,res)=>{
@@ -58,7 +47,6 @@ Router.post('/', async(req, res) => {
         first_name:Body.first_name,
          email:Body.email,
     })
-    console.log(result)
     await result.save()
     return res.status(201).json({msg:'new user added'});
 });
