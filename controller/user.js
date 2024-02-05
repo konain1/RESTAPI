@@ -30,9 +30,38 @@ const UserModel = require('../model/user')
         }
 }
 
+async function HandlerDeleteUser(req,res){
+    const id  = req.params.id
 
+    try {
+        let deleteuser = await UserModel.findByIdAndDelete({_id : id})
+        res.json(deleteuser)
+        
+    } catch (error) {
+        res.status(403).json({msg:'invalid input or id'})
+    }
+}
+
+async function HandlerCreateuser(req,res){
+
+    const Body = req.body
+
+    if(!Body.first_name || !Body.email){
+        return res.status(403).json({msg:'all fields must be filled'})
+    }
+
+    // storing the data into structure and passing the data onto database
+   const result = await UserModel.create({
+        first_name:Body.first_name,
+         email:Body.email,
+    })
+    await result.save()
+    return res.status(201).json({msg:'new user added'});
+}
 
 module.exports = {
     HandlerAllUsers,
-    HandlerAllUsersDetailsById
+    HandlerAllUsersDetailsById,
+    HandlerDeleteUser,
+    HandlerCreateuser
 }
